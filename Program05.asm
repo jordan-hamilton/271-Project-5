@@ -40,6 +40,9 @@ array               DWORD      MAX DUP (?)
 
 main PROC
 
+     ; Seed the random number generalor
+     call      Randomize
+
      push      OFFSET instruction2
      push      OFFSET instruction1
      push      OFFSET intro 
@@ -64,6 +67,7 @@ main PROC
      push      request
      call      sortList
 
+     push      OFFSET medianMsg
      push      OFFSET array
      push      request
      call      displayMedian
@@ -80,9 +84,10 @@ main PROC
 main ENDP
 
 
+; Procedure to introduce the user to the expected output of the program
+; Preconditions: None
+; Registers changed: edx
 introduction PROC
-
-     call      Randomize
      
      push      ebp
      mov       ebp, esp
@@ -106,6 +111,9 @@ introduction PROC
 introduction ENDP
 
 
+; Procedure to get and validate a number of random integers to generate from user input
+; Preconditions: None
+; Registers changed: eax, ebx, edx 
 getData PROC
 
      push      ebp
@@ -146,6 +154,9 @@ getData PROC
 getData ENDP
 
 
+; Procedure to generate random numbers within the set range, then enter these sequentially into the array.
+; Preconditions: request variable is specified in the getData procdeure
+; Registers changed: eax, ecx
 fillArray PROC
 
      push      ebp
@@ -175,37 +186,36 @@ fillArray PROC
 
 fillArray ENDP
 
+
+; Procedure to loop through the array and sort its elements in descending order
+; Preconditions: Array has been populated with the a number of values equal to the request variable, during the fillArray procedure
+; Registers changed: ebx, ecx, edx
 sortList PROC
-;     push      OFFSET array
-;     push      request
 
      push      ebp
      mov       ebp, esp
 
-     push      eax
-     push      ebx
-     push      edx
-     push      esi
-
-     ; Configure the loop counter for the outer loop of a Selection Sort
+     ; Configure the loop counter for the outer loop of sorting by storing one less than the result in ecx,
+     ; then store the address of our array in esi
      mov       ecx, [ebp+8]
      dec       ecx
      mov       esi, [ebp+12]
-     
-     loop1:
-          ; Store the address of esi before we begin our second loop
-          mov       eax, esi
 
-          ; Store the loop counter for the first loop before starting our second loop
-          push      esi
+     loop1:
+          ; Store the address of esi and our loop counter before we begin our second loop
           push      ecx
+          push      esi
 
      loop2:
+          ; Dereference the current array element and the following element, then compare the two values
+          ; to determine if the need to be exchanged
           mov       ebx, [esi]
           mov       edx, [esi+4]
           cmp       ebx, edx
           jae       endExchange
-
+     
+          ; If the smaller value is the first element we're comparing, push the current element's address and the following
+          ; elements address so the reference parameters can be used in our exchange procedure
           beginExchange:
                mov       ebx, esi
                push      ebx
@@ -213,27 +223,19 @@ sortList PROC
                push      ebx
                call      exchange
 
-          ; Once we've determined whether or not we need to swap values in the array, set esi to the next value in the array
+          ; After we've determined whether or not to swap values in the array, set esi to the next value in the array and repeat the
+          ; second loop if needed.
           endExchange:
                add       esi, 4
 
           loop      loop2
 
-          ; Now that our second loop has ended, we need to set esi back to the address we stored in eax, increment it by 4, then pop ecx
-          ; This allows us to pick up the first loop where we left off
-     pop       eax
-     mov       esi, eax
-     add       esi, 4
+          ; Now that our second loop has ended, we need to set esi back to the address we stored in eax, then pop ecx
+          ; This allows us to do another pass through the array to compare values
+          pop       esi
+          pop       ecx
      
-     pop       ecx
-
-     loop      loop1
-
-
-     pop       eax
-     pop       ebx
-     pop       ecx   
-     pop       esi  
+          loop      loop1
 
      pop       ebp
      ret       8
@@ -241,34 +243,35 @@ sortList PROC
 sortList ENDP
 
 
+; Procedure to swap two elements in the array
+; Preconditions: Addresses to two sequential array elements must be on the stack 
+; Registers changed: eax, ebx, ecx, edx
 exchange PROC
+
      push      ebp
      mov       ebp, esp
-
-     push      eax
-     push      ebx
+     
+     ; Save ecx before altering it
      push      ecx
-     push      edx
-     push      edi
 
+     ; Store the address of the array in edi
      mov       edi, [ebp+12]
      
      ; Store addresses to the first and second elements
      mov       eax, [ebp+12]
      mov       ebx, [ebp+8]
      
+     ; Dereference both elements
      mov       ecx, [eax]
      mov       edx, [ebx]
 
+     ; Save the value in the second element into the address of the first element and vice versa
      mov       [edi], edx
      add       edi, 4
      mov       [edi], ecx
 
-     pop       eax
-     pop       ebx
+     ; Restore our loop counter to its original value
      pop       ecx
-     pop       edx
-     pop       edi
 
      pop       ebp
      ret       8
@@ -276,17 +279,58 @@ exchange PROC
 exchange ENDP
 
 
+; Procedure to calculate and display the median value 
+; Preconditions: Array must have been sorted via the sortList procedure
+; Registers changed: eax, ebx, ecx edx
 displayMedian PROC
-
      push      ebp
      mov       ebp, esp
 
+     mov       esi, [ebp+12]
+     
+     ; Set up 32-bit division to determine if there is an odd or even number of values in the array
+     mov       eax, [ebp+8]
+     mov       ebx, 2
+     mov       edx, 0
+     div       ebx
+     
+     ; If our remainder when dividing by 2 was not 0, then we had an odd number of values in the array
+     ; We can then look at the exact median
+     cmp       edx, 0
+     jne       oddArray
+
+     ; We'll divide again if our remainder was 0. We set up division by adding the array values at our quotient and one less than
+     ; our quotient (shifting because our first element starts at esi), then dividing that number by 2 to get the rounded median.
+     mov       edx, 0
+     mov       ecx, eax
+     dec       ecx
+
+     mov       eax, [esi+4*eax]
+     add       eax, [esi+4*ecx]
+     div       ebx
+     
+     jmp       printMedian
+
+     oddArray:
+          ; Dereference the array element at our quotient
+          mov       eax, [esi+4*eax]
+
+     ; Display our message and the median value we determined and stored in eax
+     printMedian:
+          mov       edx, [ebp+16]
+          call      WriteString
+          call      WriteDec
+          call      Crlf       
+
      pop       ebp
-     ret       8
+     ret       12
 
 displayMedian ENDP
 
 
+; Procedure to list all values in the array
+; Preconditions: Array must have been filled with elements during the fillArray procedure
+; Registers changed: eax, ebx, ecx edx
 displayList PROC
 
      push      ebp
