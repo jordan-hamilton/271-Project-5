@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/04/19 21:24:55
+Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/05/19 16:57:02
 -Programming Assignment #5     (Program05.asm		     Page 1 - 1
 
 
@@ -108,15 +108,31 @@ Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/04/19 21:24:55
 	   20 6F 66 20 72
 	   61 6E 67 65 2E
 	   00
- 00000146 54 68 61 6E 6B	outro               BYTE      "Thanks for playing!",0
-	   73 20 66 6F 72
-	   20 70 6C 61 79
-	   69 6E 67 21 00
+ 00000146 48 65 72 65 27	titleUnsorted       BYTE      "Here's the list before sorting:",0
+	   73 20 74 68 65
+	   20 6C 69 73 74
+	   20 62 65 66 6F
+	   72 65 20 73 6F
+	   72 74 69 6E 67
+	   3A 00
+ 00000166 48 65 72 65 27	titleSorted         BYTE      "Here's the list after sorting:",0
+	   73 20 74 68 65
+	   20 6C 69 73 74
+	   20 61 66 74 65
+	   72 20 73 6F 72
+	   74 69 6E 67 3A
+	   00
+ 00000185 4D 65 64 69 61	medianMsg           BYTE      "Median value: ",0
+	   6E 20 76 61 6C
+	   75 65 3A 20 00
 
- 0000015A 20 20 20 00		outputSpacing       BYTE      "   ",0
- 0000015E 00000000		numbersPrinted      DWORD     0
+ 00000194 20 20 20 00		outputSpacing       BYTE      "   ",0
+ 00000198 00000000		numbersPrinted      DWORD     0
 
- 00000162 00000000		request             DWORD     ?
+ 0000019C 00000000		request             DWORD     ?
+ 000001A0  000000C8 [		array               DWORD      MAX DUP (?)
+	    00000000
+	   ]
 
 
  00000000			.code
@@ -126,103 +142,314 @@ Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/04/19 21:24:55
  00000000  68 00000080 R	     push      OFFSET instruction2
  00000005  68 0000002D R	     push      OFFSET instruction1
  0000000A  68 00000000 R	     push      OFFSET intro 
- 0000000F  E8 00000025		     call      introduction
+ 0000000F  E8 0000007F		     call      introduction
 
- 00000014  68 00000162 R	     push      OFFSET request
+ 00000014  68 0000019C R	     push      OFFSET request
  00000019  68 00000122 R	     push      OFFSET retryMsg
  0000001E  68 000000E2 R	     push      OFFSET promptForNumber
- 00000023  E8 0000003F		     call      getData
+ 00000023  E8 0000009E		     call      getData
 
-				     ;call      showComposites
+ 00000028  68 000001A0 R	     push      OFFSET array
+ 0000002D  FF 35 0000019C R	     push      request
+ 00000033  E8 000000C4		     call      fillArray
 
- 00000028  68 00000146 R	     push      OFFSET outro
- 0000002D  E8 00000069		     call      farewell
+ 00000038  68 000001A0 R	     push      OFFSET array
+ 0000003D  FF 35 0000019C R	     push      request
+ 00000043  68 00000194 R	     push      OFFSET outputSpacing
+ 00000048  68 00000146 R	     push      OFFSET titleUnsorted
+ 0000004D  E8 00000135		     call      displayList
+
+ 00000052  68 000001A0 R	     push      OFFSET array
+ 00000057  FF 35 0000019C R	     push      request
+ 0000005D  E8 000000BC		     call      sortList
+
+ 00000062  68 000001A0 R	     push      OFFSET array
+ 00000067  FF 35 0000019C R	     push      request
+ 0000006D  E8 0000010E		     call      displayMedian
+
+ 00000072  68 000001A0 R	     push      OFFSET array
+ 00000077  FF 35 0000019C R	     push      request
+ 0000007D  68 00000194 R	     push      OFFSET outputSpacing
+ 00000082  68 00000166 R	     push      OFFSET titleSorted
+ 00000087  E8 000000FB		     call      displayList
 				     
 				     ; Exit to the operating system
 					invoke    ExitProcess,0
- 00000032  6A 00	   *	    push   +000000000h
- 00000034  E8 00000000 E   *	    call   ExitProcess
+ 0000008C  6A 00	   *	    push   +000000000h
+ 0000008E  E8 00000000 E   *	    call   ExitProcess
 
- 00000039			main ENDP
+ 00000093			main ENDP
 
 
- 00000039			introduction PROC
+ 00000093			introduction PROC
+
+ 00000093  E8 00000000 E	     call      Randomize
 				     
- 00000039  55			     push      ebp
- 0000003A  8B EC		     mov       ebp, esp
+ 00000098  55			     push      ebp
+ 00000099  8B EC		     mov       ebp, esp
 
 				     ; Introduce the program (and programmer)
- 0000003C  8B 55 08		     mov       edx, [ebp+8] 
- 0000003F  E8 00000000 E	     call      WriteString
- 00000044  E8 00000000 E	     call      Crlf
+ 0000009B  8B 55 08		     mov       edx, [ebp+8] 
+ 0000009E  E8 00000000 E	     call      WriteString
+ 000000A3  E8 00000000 E	     call      Crlf
 
 				     ; Give the user instructions on how to begin displaying array contents
- 00000049  8B 55 0C		     mov       edx, [ebp+12]
- 0000004C  E8 00000000 E	     call      WriteString
- 00000051  E8 00000000 E	     call      Crlf
- 00000056  8B 55 10		     mov       edx, [ebp+16]
- 00000059  E8 00000000 E	     call      WriteString
- 0000005E  E8 00000000 E	     call      Crlf
+ 000000A8  8B 55 0C		     mov       edx, [ebp+12]
+ 000000AB  E8 00000000 E	     call      WriteString
+ 000000B0  E8 00000000 E	     call      Crlf
+ 000000B5  8B 55 10		     mov       edx, [ebp+16]
+ 000000B8  E8 00000000 E	     call      WriteString
+ 000000BD  E8 00000000 E	     call      Crlf
 
- 00000063  5D			     pop       ebp
- 00000064  C2 000C		     ret       12
+ 000000C2  5D			     pop       ebp
+ 000000C3  C2 000C		     ret       12
 
- 00000067			introduction ENDP
+ 000000C6			introduction ENDP
 
 
- 00000067			getData PROC
+ 000000C6			getData PROC
 
- 00000067  55			     push      ebp
- 00000068  8B EC		     mov       ebp, esp
+ 000000C6  55			     push      ebp
+ 000000C7  8B EC		     mov       ebp, esp
+
+				     ; Store the address of result in the ebx register
+ 000000C9  8B 5D 10		     mov       ebx, [ebp+16]
 
 				     ; Ask the user for a number in the valid range, then read input from the keyboard
 				     ; Call the validate procedure to verify that the number was in the requested range
- 0000006A			     readInput:
- 0000006A  8B 55 08		          mov       edx, [ebp+8]
- 0000006D  E8 00000000 E	          call      WriteString
- 00000072  E8 00000000 E	          call      ReadInt
+ 000000CC			     readInput:
+ 000000CC  8B 55 08		          mov       edx, [ebp+8]
+ 000000CF  E8 00000000 E	          call      WriteString
+ 000000D4  E8 00000000 E	          call      ReadInt
 
 				     ; Compare the entered number with the bounds of the range, jumping to the invalidInput label for values outside the range
-				     ; Otherwise, continue the program by popping the return address into the instruction pointer from the stack
- 00000077  83 F8 0A		     cmp       eax, MIN
- 0000007A  7C 09		     jl        invalidInput
- 0000007C  3D 000000C8		     cmp       eax, MAX
- 00000081  7F 02		     jg        invalidInput
- 00000083  EB 0F		     jmp       goodInput   
+				     ; Otherwise, jump to the goodInput to continue the program
+ 000000D9  83 F8 0A		     cmp       eax, MIN
+ 000000DC  7C 09		     jl        invalidInput
+ 000000DE  3D 000000C8		     cmp       eax, MAX
+ 000000E3  7F 02		     jg        invalidInput
+ 000000E5  EB 0F		     jmp       goodInput   
 
- 00000085			     invalidInput:
- 00000085  8B 55 0C		          mov       edx, [ebp+12]
- 00000088  E8 00000000 E	          call      WriteString
- 0000008D  E8 00000000 E	          call      Crlf
- 00000092  EB D6		          jmp       readInput
+				     ; Display an error message, then go back to prompting for input if the entered value was too large or too small
+ 000000E7			     invalidInput:
+ 000000E7  8B 55 0C		          mov       edx, [ebp+12]
+ 000000EA  E8 00000000 E	          call      WriteString
+ 000000EF  E8 00000000 E	          call      Crlf
+ 000000F4  EB D6		          jmp       readInput
 				     
- 00000094			     goodInput:
- 00000094  89 45 10		          mov       [ebp+16], eax
+				     ; Store the entered integer in result once we've confirmed it's in range
+ 000000F6			     goodInput:
+ 000000F6  89 03		          mov       [ebx], eax
 
- 00000097  5D			     pop       ebp
- 00000098  C2 000C		     ret       12
+ 000000F8  5D			     pop       ebp
+ 000000F9  C2 000C		     ret       12
 
- 0000009B			getData ENDP
+ 000000FC			getData ENDP
 
 
- 0000009B			farewell PROC
+ 000000FC			fillArray PROC
 
- 0000009B  55			     push      ebp
- 0000009C  8B EC		     mov       ebp, esp
+ 000000FC  55			     push      ebp
+ 000000FD  8B EC		     mov       ebp, esp
+
+ 000000FF  8B 75 0C		     mov       esi, [ebp+12]
+ 00000102  8B 4D 08		     mov       ecx, [ebp+8]
 				     
-				     ; Display the goodbye message to the user
- 0000009E  E8 00000000 E	     call      Crlf
- 000000A3  8B 55 08		     mov       edx, [ebp+8]
- 000000A6  E8 00000000 E	     call      WriteString
+ 00000105			     fill:    
+				          ; Set up the range of random numbers to generate by moving the difference between the high and low numbers into eax and then incrementing
+				          ; eax by 1, since RandomRange uses one less than the number in eax as the upper limit.
+ 00000105  B8 00000383		          mov       eax, HI-LO
+ 0000010A  40			          inc       eax
+ 0000010B  E8 00000000 E	          call      RandomRange
 
- 000000AB  5D			     pop       ebp
- 000000AC  C2 0004		     ret       4
+				          ; Add our lower limit back to eax to ensure the number that was generated is back in the acceptable range, instead of starting at 0
+ 00000110  83 C0 64		          add       eax, LO
+				          
+				          ; Save the random number in the address at esi, then move to the address of the next element in the array and loop so we're only
+				          ; filling the array with the requested number of integers
+ 00000113  89 06		          mov       [esi], eax
+ 00000115  83 C6 04		          add       esi, 4
+ 00000118  E2 EB		          loop      fill
 
- 000000AF			farewell ENDP
+ 0000011A  5D			     pop       ebp
+ 0000011B  C2 0008		     ret       8
+
+ 0000011E			fillArray ENDP
+
+ 0000011E			sortList PROC
+				;     push      OFFSET array
+				;     push      request
+
+ 0000011E  55			     push      ebp
+ 0000011F  8B EC		     mov       ebp, esp
+
+ 00000121  50			     push      eax
+ 00000122  53			     push      ebx
+ 00000123  52			     push      edx
+ 00000124  56			     push      esi
+
+				     ; Configure the loop counter for the outer loop of a Selection Sort
+ 00000125  8B 4D 08		     mov       ecx, [ebp+8]
+ 00000128  49			     dec       ecx
+ 00000129  8B 75 0C		     mov       esi, [ebp+12]
+				     
+ 0000012C			     loop1:
+				          ; Store the address of esi before we begin our second loop
+ 0000012C  8B C6		          mov       eax, esi
+
+				          ; Store the loop counter for the first loop before starting our second loop
+ 0000012E  56			          push      esi
+ 0000012F  51			          push      ecx
+
+ 00000130			     loop2:
+ 00000130  8B 1E		          mov       ebx, [esi]
+ 00000132  8B 56 04		          mov       edx, [esi+4]
+ 00000135  3B DA		          cmp       ebx, edx
+ 00000137  73 0C		          jae       endExchange
+
+ 00000139			          beginExchange:
+ 00000139  8B DE		               mov       ebx, esi
+ 0000013B  53			               push      ebx
+ 0000013C  83 C3 04		               add       ebx, 4
+ 0000013F  53			               push      ebx
+ 00000140  E8 00000016		               call      exchange
+
+				          ; Once we've determined whether or not we need to swap values in the array, set esi to the next value in the array
+ 00000145			          endExchange:
+ 00000145  83 C6 04		               add       esi, 4
+
+ 00000148  E2 E6		          loop      loop2
+
+				          ; Now that our second loop has ended, we need to set esi back to the address we stored in eax, increment it by 4, then pop ecx
+				          ; This allows us to pick up the first loop where we left off
+ 0000014A  58			     pop       eax
+ 0000014B  8B F0		     mov       esi, eax
+ 0000014D  83 C6 04		     add       esi, 4
+				     
+ 00000150  59			     pop       ecx
+
+ 00000151  E2 D9		     loop      loop1
+
+
+ 00000153  58			     pop       eax
+ 00000154  5B			     pop       ebx
+ 00000155  59			     pop       ecx   
+ 00000156  5E			     pop       esi  
+
+ 00000157  5D			     pop       ebp
+ 00000158  C2 0008		     ret       8
+
+ 0000015B			sortList ENDP
+
+
+ 0000015B			exchange PROC
+ 0000015B  55			     push      ebp
+ 0000015C  8B EC		     mov       ebp, esp
+
+ 0000015E  50			     push      eax
+ 0000015F  53			     push      ebx
+ 00000160  51			     push      ecx
+ 00000161  52			     push      edx
+ 00000162  57			     push      edi
+
+ 00000163  8B 7D 0C		     mov       edi, [ebp+12]
+				     
+				     ; Store addresses to the first and second elements
+ 00000166  8B 45 0C		     mov       eax, [ebp+12]
+ 00000169  8B 5D 08		     mov       ebx, [ebp+8]
+				     
+ 0000016C  8B 08		     mov       ecx, [eax]
+ 0000016E  8B 13		     mov       edx, [ebx]
+
+ 00000170  89 17		     mov       [edi], edx
+ 00000172  83 C7 04		     add       edi, 4
+ 00000175  89 0F		     mov       [edi], ecx
+
+ 00000177  58			     pop       eax
+ 00000178  5B			     pop       ebx
+ 00000179  59			     pop       ecx
+ 0000017A  5A			     pop       edx
+ 0000017B  5F			     pop       edi
+
+ 0000017C  5D			     pop       ebp
+ 0000017D  C2 0008		     ret       8
+
+ 00000180			exchange ENDP
+
+
+ 00000180			displayMedian PROC
+
+ 00000180  55			     push      ebp
+ 00000181  8B EC		     mov       ebp, esp
+
+ 00000183  5D			     pop       ebp
+ 00000184  C2 0008		     ret       8
+
+ 00000187			displayMedian ENDP
+
+
+ 00000187			displayList PROC
+
+ 00000187  55			     push      ebp
+ 00000188  8B EC		     mov       ebp, esp
+
+				     ; Store the offset of the array
+ 0000018A  8B 75 14		     mov       esi, [ebp+20]
+
+				     ; Set ebx to 0 initially so we can track how many numbers we've printed on a line
+ 0000018D  BB 00000000		     mov       ebx, 0
+
+				     ; Store the requested number of integers in ecx so we can loop through the array the appropriate number of times
+ 00000192  8B 4D 10		     mov       ecx, [ebp+16]
+
+				     ; Display the title
+ 00000195  8B 55 08		     mov       edx, [ebp+8]
+ 00000198  E8 00000000 E	     call      WriteString
+ 0000019D  E8 00000000 E	     call      Crlf
+
+				     ; If we've printed 10 numbers on a line, print a newline. If we've printed at least 1 but less than 10, print some spacing 
+				     ;before printing a number. Otherwise, we'll just print the number without additional formatting first
+ 000001A2			     printArray:
+ 000001A2  83 FB 0A		          cmp       ebx, NUMBERSPERLINE
+ 000001A5  74 07		          je        newLine
+ 000001A7  83 FB 00		          cmp       ebx, 0
+ 000001AA  75 0E		          jne       spacing
+ 000001AC  EB 14		          jmp       printNumber
+
+				          ; Print the new line without additional spacing, then reset the line counter in ebx.
+				          ; We do this by skipping over the spacing label so we don't print the additional spacing
+				          ; after moving to a new line
+ 000001AE			          newLine:
+ 000001AE  E8 00000000 E	               call      Crlf
+ 000001B3  BB 00000000		               mov       ebx, 0
+ 000001B8  EB 08		               jmp       printNumber
+
+				          ; Display some spacing if we've printed more than one number, but fewer than 10 on this line
+ 000001BA			          spacing:
+ 000001BA  8B 55 0C		               mov       edx, [ebp+12]
+ 000001BD  E8 00000000 E	               call      WriteString
+
+				          ; Increment the number of integers we've printed on one line, then display the decimal value of the
+				          ; integer at the array index being referenced in esi. Increment esi by 4 so we can loop to display the next element
+ 000001C2			          printNumber:
+ 000001C2  43			               inc       ebx
+ 000001C3  8B 06		               mov       eax, [esi]
+ 000001C5  E8 00000000 E	               call      WriteDec
+ 000001CA  83 C6 04		               add       esi, 4
+				          
+ 000001CD  E2 D3		          loop printArray
+
+				     ; Ensure we've moved to a new line after completely printing the array
+ 000001CF  E8 00000000 E	     call      Crlf
+
+ 000001D4  5D			     pop       ebp
+ 000001D5  C2 0010		     ret       16
+
+ 000001D8			displayList ENDP
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/04/19 21:24:55
+Microsoft (R) Macro Assembler Version 14.16.27027.1	    03/05/19 16:57:02
 -Programming Assignment #5     (Program05.asm		     Symbols 2 - 1
 
 
@@ -316,8 +543,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000166 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000000AF Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000004C0 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000001D8 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -424,15 +651,28 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-farewell . . . . . . . . . . . .	P Near	 0000009B _TEXT	Length= 00000014 Public STDCALL
-getData  . . . . . . . . . . . .	P Near	 00000067 _TEXT	Length= 00000034 Public STDCALL
-  readInput  . . . . . . . . . .	L Near	 0000006A _TEXT	
-  invalidInput . . . . . . . . .	L Near	 00000085 _TEXT	
-  goodInput  . . . . . . . . . .	L Near	 00000094 _TEXT	
-introduction . . . . . . . . . .	P Near	 00000039 _TEXT	Length= 0000002E Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000039 Public STDCALL
+displayList  . . . . . . . . . .	P Near	 00000187 _TEXT	Length= 00000051 Public STDCALL
+  printArray . . . . . . . . . .	L Near	 000001A2 _TEXT	
+  newLine  . . . . . . . . . . .	L Near	 000001AE _TEXT	
+  spacing  . . . . . . . . . . .	L Near	 000001BA _TEXT	
+  printNumber  . . . . . . . . .	L Near	 000001C2 _TEXT	
+displayMedian  . . . . . . . . .	P Near	 00000180 _TEXT	Length= 00000007 Public STDCALL
+exchange . . . . . . . . . . . .	P Near	 0000015B _TEXT	Length= 00000025 Public STDCALL
+fillArray  . . . . . . . . . . .	P Near	 000000FC _TEXT	Length= 00000022 Public STDCALL
+  fill . . . . . . . . . . . . .	L Near	 00000105 _TEXT	
+getData  . . . . . . . . . . . .	P Near	 000000C6 _TEXT	Length= 00000036 Public STDCALL
+  readInput  . . . . . . . . . .	L Near	 000000CC _TEXT	
+  invalidInput . . . . . . . . .	L Near	 000000E7 _TEXT	
+  goodInput  . . . . . . . . . .	L Near	 000000F6 _TEXT	
+introduction . . . . . . . . . .	P Near	 00000093 _TEXT	Length= 00000033 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000093 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+sortList . . . . . . . . . . . .	P Near	 0000011E _TEXT	Length= 0000003D Public STDCALL
+  loop1  . . . . . . . . . . . .	L Near	 0000012C _TEXT	
+  loop2  . . . . . . . . . . . .	L Near	 00000130 _TEXT	
+  beginExchange  . . . . . . . .	L Near	 00000139 _TEXT	
+  endExchange  . . . . . . . . .	L Near	 00000145 _TEXT	
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
 
@@ -654,6 +894,7 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+array  . . . . . . . . . . . . .	DWord	 000001A0 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
@@ -671,13 +912,15 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
-numbersPrinted . . . . . . . . .	DWord	 0000015E _DATA	
-outputSpacing  . . . . . . . . .	Byte	 0000015A _DATA	
-outro  . . . . . . . . . . . . .	Byte	 00000146 _DATA	
+medianMsg  . . . . . . . . . . .	Byte	 00000185 _DATA	
+numbersPrinted . . . . . . . . .	DWord	 00000198 _DATA	
+outputSpacing  . . . . . . . . .	Byte	 00000194 _DATA	
 promptForNumber  . . . . . . . .	Byte	 000000E2 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-request  . . . . . . . . . . . .	DWord	 00000162 _DATA	
+request  . . . . . . . . . . . .	DWord	 0000019C _DATA	
 retryMsg . . . . . . . . . . . .	Byte	 00000122 _DATA	
+titleSorted  . . . . . . . . . .	Byte	 00000166 _DATA	
+titleUnsorted  . . . . . . . . .	Byte	 00000146 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
